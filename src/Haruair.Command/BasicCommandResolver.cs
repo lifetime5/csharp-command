@@ -22,7 +22,7 @@ namespace Haruair.Command
 			}
 
 			var commandList = ConvertCommandsToCommandMeta(Commands);
-			var command = commandList.FirstOrDefault(p => (p.Method.Equals(request.Command) || p.Alias.Equals(request.Command)));
+			var command = commandList.FirstOrDefault(p => (p.Method.Equals(request.Command)));
 
 			if (command == null)
 			{
@@ -31,8 +31,7 @@ namespace Haruair.Command
 
 			var methodList = ConvertCommandToCommandMeta(command.CommandType);
 			var method = methodList.FirstOrDefault(p =>
-			   (p.Method != null && p.Method.Equals(request.Method))
-			   || (p.Alias != null && p.Alias.Equals(request.Method)));
+			   (p.Method != null && p.Method.Equals(request.Method)));
 			if (method == null)
 			{
 				return null;
@@ -48,7 +47,7 @@ namespace Haruair.Command
 			if (request.Command == null)
 				return commandList;
 
-			var command = commandList.FirstOrDefault(p => (p.Method.Equals(request.Command) || p.Alias.Equals(request.Command)));
+			var command = commandList.FirstOrDefault(p => (p.Method.Equals(request.Command)));
 
 			if (command == null && commandList.Count > 0)
 			{
@@ -60,7 +59,7 @@ namespace Haruair.Command
 			if (request.Method == null)
 				return methodList;
 
-			return methodList;
+		    return methodList;
 		}
 
 		protected IList<CommandMeta> ConvertCommandsToCommandMeta(IList<Type> types)
@@ -92,14 +91,12 @@ namespace Haruair.Command
 				return null;
 
 			var command = (Command)Attribute.GetCustomAttribute(type, typeof(Command));
-			var usage = (Usage)Attribute.GetCustomAttribute(type, typeof(Usage));
 
-			var meta = new CommandMeta
+            var meta = new CommandMeta
 			{
-				Alias = command?.Alias,
-				Method = command?.Method,
-				Description = usage?.Description,
-				CommandType = type,
+				Method = command == null ? null : command.Method,
+				Description = command == null ? null : command.Description,
+                CommandType = type,
 				MethodInfo = null
 			};
 
@@ -112,16 +109,16 @@ namespace Haruair.Command
 				return null;
 
 			var command = (Command)Attribute.GetCustomAttribute(method, typeof(Command));
-			var usage = (Usage)Attribute.GetCustomAttribute(method, typeof(Usage));
+		    var offline = (Offline)Attribute.GetCustomAttribute(method, typeof(Offline));
 
-			var meta = new CommandMeta
+            var meta = new CommandMeta
 			{
-				Alias = command?.Alias,
-				Method = command?.Method,
-				Description = usage?.Description,
-				CommandType = type,
-				MethodInfo = method
-			};
+				Method = command == null ? null : command.Method,
+				Description = command == null ? null : command.Description,
+                CommandType = type,
+				MethodInfo = method,
+                Offline = offline != null
+            };
 
 			return meta;
 		}

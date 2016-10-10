@@ -6,27 +6,31 @@ namespace Haruair.Command
 {
 	public class Request : IRequest
 	{
+	    private string command;
 		public string Command
+        {
+            get { return command; }
+            set { command = value == null ? null : value.ToLower(); }
+        }
+        private string method;
+        public string Method
+        {
+            get { return method; }
+            set { method = value == null ? null : value.ToLower(); }
+        }
+        private IList<string> @params = new List<string>();
+        public IList<string> Params
 		{
-			get;
-			set;
-		}
-		public string Method
-		{
-			get;
-			set;
-		}
-		public IList<string> Params
-		{
-			get;
-			set;
-		} = new List<string>();
+			get { return @params; }
+			set { @params = value; }
+        }
 
-		public IDictionary<string, string> Options
-		{
-			get;
-			set;
-		} = new Dictionary<string, string>();
+        private IDictionary<string, string> options = new Dictionary<string, string>();
+        public IDictionary<string, string> Options
+        {
+            get { return options; }
+            set { options = value; }
+        }
 
-	}
+    }
 }

@@ -29,5 +29,10 @@ namespace Haruair.Command
 		{
 			Console.WriteLine(value, arg);
 		}
+
+	    public void WriteSeparator()
+        {
+            Console.WriteLine();
+        }
 	}
 }

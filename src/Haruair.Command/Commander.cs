@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Haruair.Command.Interface;
 
@@ -7,10 +8,10 @@ namespace Haruair.Command
 {
 	public class Commander
 	{
-		protected IList<Type> Commands
+		public IList<Type> Commands
 		{
 			get;
-			set;
+            protected set;
 		}
 
 		public IRequestParser RequestParser
@@ -48,7 +49,7 @@ namespace Haruair.Command
 			return this;
 		}
 
-		public void Parse(string[] args)
+		public string Parse(bool exectue, string[] args)
 		{
 
 			if (RequestParser == null)
@@ -72,12 +73,15 @@ namespace Haruair.Command
 
 			var meta = CommandResolver.Match(request);
 
-			if (meta != null)
+            PrintMessage(request);
+
+            if (meta != null)
 			{
 				var methodParameters = meta.MethodInfo.GetParameters();
 				var methodParamAttributes = (Parameter[])Attribute.GetCustomAttributes(meta.MethodInfo, typeof(Parameter));
+                methodParamAttributes = methodParamAttributes.OrderBy(param => param.Index).ToArray();
 
-				IList<string> parameters = new List<string>(new string[methodParamAttributes.Length]);
+				IList<string> parameters = new List<string>(new string[methodParameters.Length]);
 
 				if (methodParameters.Length > 0)
 				{
@@ -93,71 +97,89 @@ namespace Haruair.Command
 					}
 				}
 
-				var isRequireFieldMissing = false;
-
 				foreach (var attr in methodParamAttributes)
 				{
 					var index = Array.IndexOf(methodParamAttributes, attr);
 					if (attr.Required && parameters.ElementAtOrDefault(index) == null)
 					{
-						isRequireFieldMissing = true;
-					}
+                        return attr.Attribute;
+                    }
 				}
 
-				if (isRequireFieldMissing == false && parameters.Count == methodParamAttributes.Length)
-				{
-					if (parameters.Count == 0)
-					{
-						meta.MethodInfo.Invoke(Activator.CreateInstance(meta.CommandType), null);
-					}
-					else {
-						meta.MethodInfo.Invoke(Activator.CreateInstance(meta.CommandType), parameters.ToArray());
-					}
-				}
-				else {
-					PrintMessage(request);
-				}
+                if (exectue || meta.Offline)
+                {
+                    if (parameters.Count == 0)
+                    {
+                        meta.MethodInfo.Invoke(Activator.CreateInstance(meta.CommandType), null);
+                    }
+                    else
+                    {
+                        meta.MethodInfo.Invoke(Activator.CreateInstance(meta.CommandType), parameters.ToArray());
+                    }
+                    return string.Empty;
+                }
+			    return Environment.NewLine;
 
 			}
-			else {
-				PrintMessage(request);
-			}
+		    return null;
 		}
 
 		protected void PrintMessage(IRequest request)
 		{
+		    var details = false;
 			var list = CommandResolver.Find(request);
 			var identity = list.FirstOrDefault();
-			if (identity.MethodInfo != null)
-			{
-				Prompter.WriteLine("Example of {0}:", request.Command);
+            if (identity.MethodInfo != null)
+            {
+                details = list.Any(meta => meta.Method != null && meta.Method == request.Method);
+                if (details)
+                {
+                    Prompter.WriteLine("Example of {0} {1}:", request.Command, request.Method);
+			    }
+			    else
+                {
+                    Prompter.WriteLine("Example of {0}:", request.Command);
+                }
 			}
 			else {
 				Prompter.WriteLine("Example: ");
-			}
-			PrintCommands(list);
-		}
+            }
+		    PrintCommands(list, details ? request.Method : null);
+            Prompter.WriteSeparator();
+            Prompter.WriteLine("[CMD]\t" + DateTime.Now.ToString(CultureInfo.CurrentCulture));
+        }
 
-		protected void PrintCommands(IList<CommandMeta> metaList)
+		protected void PrintCommands(IList<CommandMeta> metaList, string method)
 		{
-			var list = metaList.Where(p => p.Method != null);
+		    var list = method != null ? metaList.Where(p => p.Method == method) : metaList.Where(p => p.Method != null);
 
-			foreach (var meta in list)
+            foreach (var meta in list)
 			{
 				Prompter.Write("  {0}", meta.Method);
-				if (meta.Alias != null) Prompter.Write(", {0}", meta.Alias);
-				if (meta.MethodInfo != null)
-				{
-					var methodParamAttributes = (Parameter[])Attribute.GetCustomAttributes(meta.MethodInfo, typeof(Parameter));
-					foreach (var param in methodParamAttributes)
-					{
-						Prompter.Write(param.Required ? " <{0}>" : " [{0}]", param.Attribute);
-					}
-				}
-				if (meta.Description != null) Prompter.WriteLine("\t{0}", meta.Description);
-				else
-					Prompter.WriteLine();
-			}
+			    if (meta.MethodInfo != null)
+                {
+                    if (method != null)
+                    {
+                        var methodParamAttributes = (Parameter[])Attribute.GetCustomAttributes(meta.MethodInfo, typeof(Parameter));
+                        methodParamAttributes = methodParamAttributes.OrderBy(param => param.Index).ToArray();
+                        foreach (var param in methodParamAttributes)
+                        {
+                            Prompter.Write(param.Required ? " <{0}>" : " [{0}]", param.Attribute);
+                        }
+                        Prompter.WriteLine();
+                        foreach (var param in methodParamAttributes)
+                        {
+                            Prompter.WriteLine("    {0}\t{1}", param.Attribute, param.Description);
+                        }
+                        goto End;
+                    }
+                }
+                if (meta.Description != null) Prompter.WriteLine("\t{0}", meta.Description);
+                else
+                    Prompter.WriteLine();
+
+                End: { }
+            }
 		}
 	}
 }

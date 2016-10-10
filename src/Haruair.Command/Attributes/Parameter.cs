@@ -11,16 +11,37 @@ namespace Haruair.Command
 			set;
 		}
 
+	    public uint Index
+	    {
+	        get;
+            set;
+        }
+
 		public bool Required
 		{
 			get;
 			set;
-		}
+        }
 
-		public Parameter(string attribute, bool required = true)
+        public string Description
+        {
+            get;
+            private set;
+        }
+
+        public Parameter(string attribute, uint index, bool required)
 		{
 			Attribute = attribute;
-			Required = required;
-		}
-	}
+		    Index = index;
+            Required = required;
+        }
+
+        public Parameter(string attribute, uint index, bool required, string description)
+        {
+            Attribute = attribute;
+            Index = index;
+            Required = required;
+            Description = description;
+        }
+    }
 }

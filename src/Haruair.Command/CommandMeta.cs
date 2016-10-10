@@ -11,19 +11,13 @@ namespace Haruair.Command
 			set;
 		}
 
-		public string Alias
-		{
-			get;
-			set;
-		}
-
 		public string Description
 		{
 			get;
 			set;
-		}
+        }
 
-		public Type CommandType
+        public Type CommandType
 		{
 			get;
 			set;
@@ -33,6 +27,12 @@ namespace Haruair.Command
 		{
 			get;
 			set;
-		}
+        }
+
+	    public bool Offline
+        {
+            get;
+            set;
+        }
 	}
 }

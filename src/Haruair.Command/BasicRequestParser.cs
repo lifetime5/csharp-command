@@ -14,7 +14,9 @@ namespace Haruair.Command
 			var request = new Request();
 			var arguments = new List<string>(args);
 
-			request.Command = arguments.ElementAtOrDefault(0);
+		    arguments.RemoveAll(string.IsNullOrEmpty);
+
+            request.Command = arguments.ElementAtOrDefault(0);
 			request.Method = arguments.ElementAtOrDefault(1);
 
 			var rest = arguments.Skip(2);
@@ -24,7 +26,7 @@ namespace Haruair.Command
 
 			foreach (var item in rest)
 			{
-				if (item.IndexOf(OptionFlag, 0, OptionFlag.Length, StringComparison.Ordinal) > -1)
+				if (OptionFlag.Length <= item.Length && item.IndexOf(OptionFlag, 0, OptionFlag.Length, StringComparison.Ordinal) > -1)
 				{
 					if (isOption == true)
 						request.Options.Add(optionName, "true");
@@ -33,7 +35,7 @@ namespace Haruair.Command
 				}
 				else if (isOption == true)
 				{
-					request.Options.Add(optionName, item);
+					request.Options.Add(optionName, item.ToLower());
 					isOption = false;
 					optionName = null;
 				}

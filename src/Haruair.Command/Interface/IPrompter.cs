@@ -10,5 +10,7 @@ namespace Haruair.Command.Interface
 		void WriteLine();
 		void WriteLine(string value);
 		void WriteLine(string value, params object[] arg);
+
+	    void WriteSeparator();
 	}
 }
